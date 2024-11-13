@@ -6,6 +6,7 @@ const dataSlice = createSlice({
     items: [],
     loading: false,
     error: null,
+    pokemon: null,
   },
   reducers: {
     fetchDataStart(state) {
@@ -20,8 +21,12 @@ const dataSlice = createSlice({
       state.error = action.payload;
       state.loading = false;
     },
+    fetchPokemonDetailsSuccess(state, action) {
+      state.pokemon = action.payload;
+      state.loading = false;
+    }
   },
 });
 
-export const { fetchDataStart, fetchDataSuccess, fetchDataFailure } = dataSlice.actions;
+export const { fetchDataStart, fetchDataSuccess, fetchDataFailure, fetchPokemonDetailsSuccess } = dataSlice.actions;
 export default dataSlice.reducer;

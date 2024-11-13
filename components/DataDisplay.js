@@ -1,38 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchData } from '../features/data/dataActions';
-import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Modal, Button } from 'react-native';
+import { fetchData, fetchPokemonDetails } from '../features/data/dataActions';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, TouchableOpacity, Modal, Button, Image } from 'react-native';
 
 const DataDisplay = () => {
   const dispatch = useDispatch();
-  const { items, loading, error } = useSelector((state) => state.data);
+  const { items, loading, error, pokemon } = useSelector((state) => state.data);
 
   // Estado para el modal y el item seleccionado
   const [modalVisible, setModalVisible] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null);
 
   useEffect(() => {
     dispatch(fetchData());
   }, [dispatch]);
 
   // Función para manejar la apertura del modal con el item seleccionado
-  const openModal = (item) => {
-    setSelectedItem(item);
+  const openModal = async (item) => {
+    dispatch(fetchPokemonDetails(item.url))
     setModalVisible(true);
   };
 
-  if (loading) return <ActivityIndicator size="large" color="#0000ff" />;
+  const capitalCase = (str = '') => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
+  if (loading) return (
+    <View style={styles.overlay}>
+      <ActivityIndicator size="large" color="#0000ff" />
+    </View>
+  );
   if (error) return <Text style={styles.error}>Error: {error}</Text>;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Results API</Text>
+      <Text style={styles.title}>POKEMONES</Text>
       <FlatList
         data={items}
-        keyExtractor={(item) => item.id.toString()}
+        keyExtractor={(item) => item.name}
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.item} onPress={() => openModal(item)}>
-            <Text style={styles.itemTitle}>{item.title}</Text>
+            <Text style={styles.itemTitle}>{capitalCase(item.name)}</Text>
           </TouchableOpacity>
         )}
       />
@@ -46,12 +53,29 @@ const DataDisplay = () => {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Detalles del Item</Text>
-            {selectedItem && (
-              <Text style={styles.modalText}>ID: {selectedItem.id}</Text>
-            )}
-            {selectedItem && (
-              <Text style={styles.modalText}>Title: {selectedItem.title}</Text>
+            <Text style={styles.modalTitle}>Detalles del Pokemon</Text>
+            {pokemon && (
+              <>
+                <View style={styles.modalHeader}>
+                  <Image
+                    source={{ uri: pokemon.sprites.front_default }}
+                    style={styles.pokemonImage}
+                  />
+                  <Text style={styles.pokemonName}>{pokemon.name}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailTitle}>Experiencia base</Text>
+                  <Text style={styles.modalText}>{pokemon.base_experience}</Text>
+                </View>
+
+                <View style={styles.detailCard}>
+                  <Text style={styles.detailTitle}>Habilidades</Text>
+                  {pokemon.abilities.map((ability, index) => (
+                    <Text key={index} style={styles.modalText}>- {capitalCase(ability.ability.name)}</Text>
+                  ))}
+                </View>
+              </>
             )}
             <Button title="Cerrar" onPress={() => setModalVisible(false)} />
           </View>
@@ -62,6 +86,17 @@ const DataDisplay = () => {
 };
 
 const styles = StyleSheet.create({
+  overlay: {
+    position: 'absolute', // Para que esté encima del contenido
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
+    justifyContent: 'center', // Centrado vertical
+    alignItems: 'center', // Centrado horizontal
+    zIndex: 9999, // Asegura que esté encima de todo
+  },
   container: {
     flex: 1,
     backgroundColor: '#f0f0f0', // Fondo gris claro
@@ -95,7 +130,7 @@ const styles = StyleSheet.create({
   // Estilos del modal
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -119,6 +154,41 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: 16,
     marginBottom: 10,
+  },
+  
+  // Nuevo estilo para imagen y nombre del Pokémon
+  modalHeader: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  pokemonImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 10,
+  },
+  pokemonName: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
+  // Nuevo estilo para las tarjetas de detalle
+  detailCard: {
+    backgroundColor: '#f9f9f9',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 8,
+    shadowColor: '#ccc',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  detailTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: 5,
   },
 });
 

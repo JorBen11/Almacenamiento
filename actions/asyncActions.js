@@ -15,7 +15,7 @@ export const fetchPostsRequest = () => ({
   export const fetchPosts = () => {
     return (dispatch) => {
       dispatch(fetchPostsRequest());
-      fetch('https://jsonplaceholder.typicode.com/posts')
+      fetch('https://pokeapi.co/api/v2/pokemon')
         .then(response => response.json())
         .then(posts => {
           dispatch(fetchPostsSuccess(posts));
